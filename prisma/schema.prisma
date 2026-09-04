@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  passwordHash String
+  createdAt    DateTime       @default(now())
+  watchlist    WatchlistItem[]
+}
+
+// One row per (user, symbol). This is where "since you last checked" lives:
+// lastSeenPrice/At are stamped when the user views the item, NOT on every poll.
+// Change detection always diffs against this, never against "yesterday's close" alone.
+model WatchlistItem {
+  id            String   @id @default(cuid())
+  userId        String
+  symbol        String
+  addedAt       DateTime @default(now())
+  lastSeenAt    DateTime @default(now())
+  lastSeenPrice Float?
+  lastSeenVolume Float?
+  notes         String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, symbol])
+  @@index([symbol])
+}
+
+// Shared, symbol-keyed time series. One poller writes this for ALL users watching
+// a symbol — quotes are never fetched per-user, which is what lets this scale to
+// many users without multiplying API calls.
+model QuoteSnapshot {
+  id         String   @id @default(cuid())
+  symbol     String
+  price      Float
+  prevClose  Float?
+  open       Float?
+  dayHigh    Float?
+  dayLow     Float?
+  volume     Float?
+  fetchedAt  DateTime @default(now())
+  // The provider's own timestamp. fetchedAt tells us when we successfully verified it.
+  marketTimestamp DateTime?
+  source     String   @default("finnhub")
+  isStale    Boolean  @default(false) // true if provider returned cached/delayed data
+
+  @@index([symbol, fetchedAt])
+}
+
+// Cached once per symbol, so a dashboard read never needs to ask a provider what
+// sector a company belongs to. The benchmark is an ETF, not a made-up sector move.
+model SymbolContext {
+  symbol          String   @id
+  industry        String?
+  sectorBenchmark String?  @default("SPY")
+  updatedAt       DateTime @updatedAt
+}
+
+// Headlines are evidence, never asserted as a causal explanation. The uniqueness
+// constraint is also the guard against duplicate news/event cards.
+model NewsEvidence {
+  id          String   @id @default(cuid())
+  symbol      String
+  headline    String
+  source      String
+  url         String
+  publishedAt DateTime
+  fetchedAt   DateTime @default(now())
+
+  @@unique([symbol, url])
+  @@index([symbol, publishedAt])
+}
+
+// Rolling stats computed periodically per symbol (avg volume, 52w high/low, ATR proxy)
+// so change-detection doesn't have to rescan the full snapshot history on every request.
+model SymbolStats {
+  symbol        String   @id
+  avgVolume20d  Float?
+  week52High    Float?
+  week52Low     Float?
+  avgDailyRangePct Float? // volatility proxy used to scale "meaningful" thresholds
+  updatedAt     DateTime @updatedAt
+}

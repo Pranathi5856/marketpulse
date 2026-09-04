@@ -1,0 +1,64 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: watchlist
+      POSTGRES_PASSWORD: watchlist
+      POSTGRES_DB: watchlist
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U watchlist"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    command: npx prisma migrate deploy
+    environment:
+      DATABASE_URL: postgresql://watchlist:watchlist@db:5432/watchlist
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://watchlist:watchlist@db:5432/watchlist
+      AUTH_SECRET: ${AUTH_SECRET:-dev-secret-change-me-in-production}
+      FINNHUB_API_KEY: ${FINNHUB_API_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://watchlist:watchlist@db:5432/watchlist
+      FINNHUB_API_KEY: ${FINNHUB_API_KEY}
+      POLL_INTERVAL_MS: 60000
+      STATS_REFRESH_INTERVAL_MS: 21600000
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  pgdata:

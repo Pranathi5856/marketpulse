@@ -18,7 +18,6 @@ export default function Dashboard() {
   const [mode, setMode] = useState<"live" | "demo">("demo");
   const [selected, setSelected] = useState<WatchlistItemView | null>(null);
   const [showMethodology, setShowMethodology] = useState(false);
-  const [showScriptModal, setShowScriptModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCaughtUp, setIsCaughtUp] = useState(false);
   const visitBaselines = useRef<Map<string, { price: number | null; timestamp: string | null }>>(new Map());
@@ -234,12 +233,6 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center flex-wrap gap-2.5">
           <button
-            onClick={() => setShowScriptModal(true)}
-            className="text-paper text-[12px] font-mono border border-ink-700 bg-ink-800/80 px-2.5 py-1.5 hover:border-amber transition-colors rounded"
-          >
-            🎙️ 90s Pitch Script
-          </button>
-          <button
             onClick={() => setShowMethodology(true)}
             className="text-amber text-[12px] font-mono border border-amber/50 px-3 py-1.5 hover:bg-amber hover:text-ink-950 transition-colors rounded"
           >
@@ -386,56 +379,6 @@ export default function Dashboard() {
       )}
 
       {showMethodology && <MethodologyModal onClose={() => setShowMethodology(false)} />}
-
-      {/* 90-Second Demo Pitch Script Modal */}
-      {showScriptModal && (
-        <div
-          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm p-4 sm:p-8 overflow-y-auto flex items-center justify-center"
-          onClick={() => setShowScriptModal(false)}
-        >
-          <div
-            className="w-full max-w-2xl border border-ink-700 bg-ink-950 p-6 sm:p-8 rounded-lg shadow-2xl space-y-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between border-b border-ink-800 pb-3">
-              <div>
-                <span className="text-[11px] font-mono text-amber uppercase tracking-wider">CODE 2026 Presentation</span>
-                <h3 className="text-xl font-bold text-paper mt-0.5">90-Second Winning Pitch Script</h3>
-              </div>
-              <button onClick={() => setShowScriptModal(false)} className="text-muted hover:text-paper font-mono text-sm">
-                ✕ Close
-              </button>
-            </div>
-
-            <div className="space-y-4 text-[13px] text-paper/90">
-              <div className="p-3 bg-ink-900/60 border border-ink-800 rounded-md">
-                <span className="font-mono text-amber text-[11px] font-bold block mb-1">00:00–00:15 · THE HOOK (TSLA Flagged Screen)</span>
-                <p>&ldquo;Every market app tells you what prices are right now. None tell you what changed <em>meaningfully</em> since you last looked. Notice our screen: instead of a wall of numbers, TSLA is immediately flagged in red with a score of 82/100, while the other 3 stocks are confirmed within normal parameters.&rdquo;</p>
-              </div>
-
-              <div className="p-3 bg-ink-900/60 border border-ink-800 rounded-md">
-                <span className="font-mono text-amber text-[11px] font-bold block mb-1">00:15–00:35 · EXPLAINABLE EVIDENCE (Click TSLA)</span>
-                <p>&ldquo;Click on TSLA. Look at our horizontal evidence breakdown: this score isn&apos;t a black box. TSLA didn&apos;t just drop 3.8% — it diverged sharply while the S&P 500 gained +0.4%, traded at 2.4× its 20-day volume, and published delivery forecast revisions. That&apos;s true alpha vs. beta decomposition.&rdquo;</p>
-              </div>
-
-              <div className="p-3 bg-ink-900/60 border border-ink-800 rounded-md">
-                <span className="font-mono text-amber text-[11px] font-bold block mb-1">00:35–00:55 · SHARED POLLING ARCHITECTURE (Click Methodology)</span>
-                <p>&ldquo;In our architecture brief, notice our shared polling architecture (1 poll per symbol). We never poll per-user. If 50,000 users track TSLA, our distributed system makes 1 shared API call. Combined with 75% directional signal accuracy and a 14% false positive rate, this is built for production.&rdquo;</p>
-              </div>
-
-              <div className="p-3 bg-ink-900/60 border border-ink-800 rounded-md">
-                <span className="font-mono text-amber text-[11px] font-bold block mb-1">00:55–01:15 · THE UX SUPERPOWER (&lsquo;Mark Caught Up&rsquo;)</span>
-                <p>&ldquo;Now click &lsquo;Mark Caught Up&rsquo;. The alert clears, and the baseline syncs to this exact moment. Next time you open MarketPulse in 2 hours or tomorrow, it only alerts you to what happened <em>since</em> this visit.&rdquo;</p>
-              </div>
-
-              <div className="p-3 bg-ink-900/60 border border-ink-800 rounded-md">
-                <span className="font-mono text-amber text-[11px] font-bold block mb-1">01:15–01:30 · THE CLOSING PUNCHLINE</span>
-                <p>&ldquo;Traditional watchlists give you cognitive fatigue. MarketPulse gives you situational awareness in 5 seconds. Thank you!&rdquo;</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Compliance Disclaimer Footer */}
       <footer className="mt-12 pt-6 border-t border-ink-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-muted font-mono">

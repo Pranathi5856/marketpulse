@@ -40,10 +40,10 @@ async function ensureQuote(symbol: string) {
 }
 
 export async function GET(req: NextRequest) {
-  if (req.nextUrl.searchParams.get("mode") === "demo") {
-    return NextResponse.json({ items: demoWatchlist, mode: "demo" });
-  }
   const userId = await getSessionUserId();
+  if (req.nextUrl.searchParams.get("mode") === "demo") {
+    return NextResponse.json({ items: demoWatchlist, mode: "demo", authenticated: Boolean(userId) });
+  }
   if (!userId) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const items = await prisma.watchlistItem.findMany({ where: { userId }, orderBy: { addedAt: "asc" } });
@@ -161,7 +161,7 @@ export async function GET(req: NextRequest) {
     };
   }));
   results.sort((a, b) => b.meaningfulScore - a.meaningfulScore);
-  return NextResponse.json({ items: results, mode: "live" });
+  return NextResponse.json({ items: results, mode: "live", authenticated: true });
 }
 
 const addSchema = z.object({ symbol: z.string().min(1).max(15).transform((value) => value.toUpperCase().trim()) });

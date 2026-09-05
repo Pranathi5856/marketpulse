@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const isNeedAuth = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("needAuth") === "true";
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -26,15 +27,27 @@ export default function LoginPage() {
       setError(data.error ?? "Something went wrong");
       return;
     }
-    router.replace("/");
+    localStorage.setItem("marketpulse-mode", "live");
+    window.location.href = "/?mode=live";
   }
 
   return (
     <main className="max-w-sm mx-auto px-6 py-24">
-      <h1 className="text-2xl font-semibold tracking-tight mb-1">Ledger</h1>
-      <p className="text-muted text-[14px] mb-8">
-        {mode === "login" ? "Sign in to your watchlist." : "Create an account to get started."}
+      <div className="flex items-center gap-2 mb-1">
+        <h1 className="text-2xl font-semibold tracking-tight">MarketPulse</h1>
+        <span className="text-[10px] font-mono uppercase px-2 py-0.5 border border-amber/60 text-amber bg-amber/10">
+          CODE 2026
+        </span>
+      </div>
+      <p className="text-muted text-[14px] mb-6">
+        {mode === "login" ? "Sign in to manage your live personal watchlist." : "Create an account to start tracking live stocks."}
       </p>
+
+      {isNeedAuth && (
+        <div className="mb-6 p-3 bg-amber/10 border border-amber/30 text-amber text-[12px] rounded-sm">
+          Please sign in or create an account to use <strong>LIVE MODE</strong> and add custom stocks.
+        </div>
+      )}
 
       <form onSubmit={submit} className="space-y-4">
         <div>

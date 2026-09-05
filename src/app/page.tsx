@@ -11,19 +11,11 @@ import { DataHealthBar } from "@/components/DataHealthBar";
 import { MethodologyModal } from "@/components/MethodologyModal";
 
 const fetcher = (url: string) => fetch(url).then(async (response) => { if (!response.ok) { const error: any = new Error("Request failed"); error.status = response.status; throw error; } return response.json(); });
-type DashboardData = { items: WatchlistItemView[]; mode: "live" | "demo" };
+type DashboardData = { items: WatchlistItemView[]; mode: "live" | "demo"; authenticated?: boolean };
 
 export default function Dashboard() {
   const router = useRouter();
-  const [mode, setMode] = useState<"live" | "demo">(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("mode") === "demo" || localStorage.getItem("marketpulse-mode") === "demo") {
-        return "demo";
-      }
-    }
-    return "live";
-  });
+  const [mode, setMode] = useState<"live" | "demo">("demo");
   const [selected, setSelected] = useState<WatchlistItemView | null>(null);
   const [showMethodology, setShowMethodology] = useState(false);
   const [isCaughtUp, setIsCaughtUp] = useState(false);
@@ -33,8 +25,9 @@ export default function Dashboard() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      if (params.get("mode") === "demo" || localStorage.getItem("marketpulse-mode") === "demo") {
-        setMode("demo");
+      const saved = localStorage.getItem("marketpulse-mode");
+      if (params.get("mode") === "live" || (saved === "live" && params.get("mode") !== "demo")) {
+        setMode("live");
       }
     }
   }, []);
@@ -98,11 +91,17 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (error?.status === 401 && mode === "live") {
-      router.replace("/login");
+      setMode("demo");
+      localStorage.setItem("marketpulse-mode", "demo");
+      router.push("/login?needAuth=true");
     }
   }, [error, mode, router]);
 
   const switchMode = (next: "live" | "demo") => {
+    if (next === "live" && !data?.authenticated) {
+      router.push("/login?needAuth=true");
+      return;
+    }
     localStorage.setItem("marketpulse-mode", next);
     visitBaselines.current.clear();
     initialComparisonDone.current = false;
@@ -112,6 +111,10 @@ export default function Dashboard() {
   };
 
   async function addSymbol(symbol: string) {
+    if (mode === "demo") {
+      alert("Sign in or create an account to customize your live watchlist!");
+      return;
+    }
     const response = await fetch("/api/watchlist", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -211,16 +214,16 @@ export default function Dashboard() {
           >
             Methodology & Architecture ↗
           </button>
-          {error?.status === 401 ? (
+          {data?.authenticated ? (
+            <button onClick={logout} className="text-muted text-[13px] hover:text-paper">
+              Sign out
+            </button>
+          ) : (
             <button
               onClick={() => router.push("/login")}
               className="text-amber text-[13px] hover:underline"
             >
               Sign in
-            </button>
-          ) : (
-            <button onClick={logout} className="text-muted text-[13px] hover:text-paper">
-              Sign out
             </button>
           )}
         </div>

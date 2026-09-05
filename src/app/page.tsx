@@ -263,9 +263,10 @@ export default function Dashboard() {
       <DataHealthBar isStaleAny={active.some((i) => i.isStale)} />
 
       {mode === "demo" && !data?.authenticated && (
-        <p className="border border-amber/50 text-amber text-[13px] px-3 py-2 mb-5">
-          Controlled presentation scenario — showcasing multi-factor change detection and explainable evidence scoring.
-        </p>
+        <div className="border border-amber/40 bg-amber/5 text-amber text-[13px] px-4 py-2.5 rounded-lg mb-6 flex items-center gap-2.5">
+          <span className="text-base select-none">💡</span>
+          <span>Controlled presentation scenario — showcasing US equities (NVDA, TSLA, MSFT, AAPL) with multi-factor change detection and explainable evidence scoring.</span>
+        </div>
       )}
 
       {mode === "live" && error?.status === 401 && (
@@ -296,13 +297,13 @@ export default function Dashboard() {
               <p className="text-muted text-[13px] mt-1">Add a symbol above to start tracking it.</p>
             </div>
           ) : (
-            <div className="border border-ink-700">
-              <div className="grid grid-cols-[80px_90px_1fr_100px_100px_auto] gap-4 py-2.5 px-4 border-b border-ink-700 text-[11px] text-muted uppercase tracking-wide">
+            <div className="border border-ink-800 rounded-lg overflow-hidden bg-ink-900/50 shadow-sm backdrop-blur">
+              <div className="grid grid-cols-[130px_100px_1fr_115px_115px_32px] gap-3 py-3 px-4 border-b border-ink-800 text-[11px] text-muted uppercase tracking-wider font-mono font-medium bg-ink-950/80">
                 <div>Symbol</div>
-                <div>Trend</div>
-                <div>Meaning</div>
-                <div className="text-right">Price</div>
-                <div className="text-right">Since visit</div>
+                <div className="text-center">Intraday</div>
+                <div>Signal & Meaning</div>
+                <div className="text-right">Price (Today)</div>
+                <div className="text-right">Since Visit</div>
                 <div />
               </div>
               {active.map((item) => (

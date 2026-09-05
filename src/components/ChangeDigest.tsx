@@ -1,4 +1,5 @@
 import { WatchlistItemView } from "@/types";
+import { getCompanyMeta } from "@/lib/companies";
 
 export function ChangeDigest({
   items,
@@ -31,16 +32,18 @@ export function ChangeDigest({
   }
 
   return (
-    <section className="border border-ink-700 bg-ink-900 px-5 py-5 mb-8">
+    <section className="border border-ink-800 bg-ink-900/60 rounded-lg p-5 mb-8 shadow-sm backdrop-blur">
       <div className="flex items-center justify-between mb-2">
-        <p className="text-muted text-[11px] uppercase tracking-[0.16em]">Since your last visit</p>
+        <p className="text-muted text-[11px] uppercase tracking-[0.16em] font-mono">Since your last visit</p>
         {onAcknowledge && (
           isAcknowledged ? (
-            <span className="text-gain text-[11px] font-mono">✓ Baseline synced to current quotes</span>
+            <span className="text-gain text-[11px] font-mono flex items-center gap-1">
+              ✓ Baseline synced to current quotes
+            </span>
           ) : (
             <button
               onClick={onAcknowledge}
-              className="text-[11px] font-mono border border-ink-700 px-2.5 py-1 text-muted hover:text-paper hover:border-amber transition-colors"
+              className="text-[11px] font-mono border border-ink-700 bg-ink-800/60 px-3 py-1 text-muted hover:text-paper hover:border-amber transition-colors rounded"
               title="Acknowledge all changes and stamp a fresh baseline now"
             >
               ✓ Mark Caught Up
@@ -57,48 +60,69 @@ export function ChangeDigest({
       </div>
 
       {/* Executive Briefing Card */}
-      <div className="border border-ink-800 bg-ink-950/80 p-3.5 mb-4 rounded-none">
-        <p className="text-[10px] font-mono text-amber uppercase tracking-wider mb-1 flex items-center gap-1.5">
-          <span>🎙️</span> Executive Briefing
+      <div className="border border-ink-800 bg-ink-950/70 p-4 mb-4 rounded-md">
+        <p className="text-[10px] font-mono text-amber uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+          <span>🎙️</span> Executive Market Briefing
         </p>
-        <p className="text-[13px] text-paper leading-relaxed">{executiveBriefing}</p>
+        <p className="text-[13px] text-paper/90 leading-relaxed">{executiveBriefing}</p>
       </div>
 
       {meaningful.length && !isAcknowledged ? (
         <>
-          <p className="text-[14px] text-paper mb-3">
-            <span className="text-loss">●</span> {significant.length} significant ·{" "}
-            <span className="text-amber">●</span> {moderate.length} moderate changes
-          </p>
+          <div className="flex items-center gap-3 text-[13px] text-paper mb-3 font-medium">
+            <span className="flex items-center gap-1.5 text-rose-400">
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+              {significant.length} significant
+            </span>
+            <span className="text-muted/40">·</span>
+            <span className="flex items-center gap-1.5 text-amber-400">
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              {moderate.length} moderate
+            </span>
+          </div>
           <div className="space-y-2">
-            {meaningful.slice(0, 5).map((item) => (
-              <button
-                key={item.symbol}
-                onClick={() => onSelect(item)}
-                className="w-full grid grid-cols-[1fr_90px_80px] text-left items-center border border-ink-700 px-3 py-2 hover:bg-ink-800 transition-colors"
-              >
-                <span className="font-mono font-semibold">{item.symbol}</span>
-                <span
-                  className={
-                    item.pctChangeSinceSeen && item.pctChangeSinceSeen >= 0
-                      ? "text-gain font-mono"
-                      : "text-loss font-mono"
-                  }
+            {meaningful.slice(0, 5).map((item) => {
+              const meta = getCompanyMeta(item.symbol);
+              const isUp = (item.pctChangeSinceSeen ?? 0) >= 0;
+              return (
+                <button
+                  key={item.symbol}
+                  onClick={() => onSelect(item)}
+                  className="w-full grid grid-cols-[1fr_auto_auto] text-left items-center gap-4 border border-ink-800/80 bg-ink-950/40 hover:bg-ink-800/50 px-3.5 py-2.5 rounded-md transition-colors group"
                 >
-                  {item.pctChangeSinceSeen !== null
-                    ? `${item.pctChangeSinceSeen >= 0 ? "+" : ""}${item.pctChangeSinceSeen.toFixed(1)}%`
-                    : "—"}
-                </span>
-                <span className="text-right font-mono text-paper">Score {item.meaningfulScore}</span>
-              </button>
-            ))}
+                  <div className="min-w-0 flex items-center gap-2">
+                    <span className="font-mono font-bold text-[14px] text-paper group-hover:text-amber transition-colors">
+                      {item.symbol}
+                    </span>
+                    <span className="text-muted text-[12px] font-sans truncate">
+                      {meta.name}
+                    </span>
+                  </div>
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded text-[12px] font-mono font-semibold tabular-nums ${
+                      isUp
+                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                        : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                    }`}
+                  >
+                    {isUp ? "+" : ""}
+                    {item.pctChangeSinceSeen !== null ? `${item.pctChangeSinceSeen.toFixed(2)}%` : "—"}
+                  </span>
+                  <span className="text-right font-mono text-[11px] uppercase tracking-wider text-muted bg-ink-800/80 px-2 py-1 rounded border border-ink-700/80">
+                    Score {item.meaningfulScore}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </>
       ) : (
-        <p className="text-paper text-[14px]">🟢 No unacknowledged meaningful changes.</p>
+        <p className="text-paper text-[14px] flex items-center gap-2 py-1">
+          <span className="text-gain">●</span> No unacknowledged meaningful changes.
+        </p>
       )}
-      <p className="text-muted text-[12px] mt-4">
-        🟢 {isAcknowledged ? items.length : Math.max(0, items.length - meaningful.length)} stocks within normal parameters
+      <p className="text-muted text-[12px] mt-4 flex items-center gap-2 font-mono">
+        <span className="text-gain">●</span> {isAcknowledged ? items.length : Math.max(0, items.length - meaningful.length)} stocks within normal parameters
       </p>
     </section>
   );

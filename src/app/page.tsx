@@ -38,6 +38,12 @@ export default function Dashboard() {
   );
 
   useEffect(() => {
+    if (data?.authenticated && mode !== "live") {
+      setMode("live");
+    }
+  }, [data?.authenticated, mode]);
+
+  useEffect(() => {
     if (!data?.items || !Array.isArray(data.items)) return;
     if (data.mode === "live") {
       data.items.forEach((item) => {
@@ -219,22 +225,31 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 mb-4 text-[12px] font-mono">
-        <div className="flex gap-1 border border-ink-700 p-1">
-          <button
-            onClick={() => switchMode("live")}
-            className={`px-3 py-1.5 ${mode === "live" ? "bg-ink-700 text-paper" : "text-muted"}`}
-          >
-            LIVE MODE
-          </button>
-          <button
-            onClick={() => switchMode("demo")}
-            className={`px-3 py-1.5 ${mode === "demo" ? "bg-amber text-ink-900" : "text-muted"}`}
-          >
-            DEMO MODE
-          </button>
-        </div>
-        {mode === "live" && (
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4 text-[12px] font-mono">
+        {!data?.authenticated ? (
+          <div className="flex gap-1 border border-ink-700 p-1">
+            <button
+              onClick={() => switchMode("live")}
+              className={`px-3 py-1.5 ${mode === "live" ? "bg-ink-700 text-paper" : "text-muted"}`}
+            >
+              LIVE MODE
+            </button>
+            <button
+              onClick={() => switchMode("demo")}
+              className={`px-3 py-1.5 ${mode === "demo" ? "bg-amber text-ink-900" : "text-muted"}`}
+            >
+              DEMO MODE
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] uppercase tracking-wider text-gain font-mono flex items-center gap-1.5 border border-gain/30 bg-gain/5 px-2.5 py-1">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-gain animate-pulse"></span>
+              Live Watchlist Active
+            </span>
+          </div>
+        )}
+        {mode === "live" && data?.authenticated && (
           <button onClick={() => mutate()} className="border border-ink-700 px-3 py-1.5 text-muted hover:text-paper">
             REFRESH DATA
           </button>
@@ -244,7 +259,7 @@ export default function Dashboard() {
       {/* Data Health & Integrity Monitor */}
       <DataHealthBar isStaleAny={active.some((i) => i.isStale)} />
 
-      {mode === "demo" && (
+      {mode === "demo" && !data?.authenticated && (
         <p className="border border-amber/50 text-amber text-[13px] px-3 py-2 mb-5">
           Controlled presentation scenario — showcasing multi-factor change detection and explainable evidence scoring.
         </p>

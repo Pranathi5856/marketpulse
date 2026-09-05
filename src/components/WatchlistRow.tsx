@@ -11,7 +11,7 @@ export function WatchlistRow({ item, onRemove, onSelect }: { item: WatchlistItem
   const isUp = (item.pctChangeToday ?? 0) >= 0;
   return <div className={`grid grid-cols-[80px_90px_1fr_100px_100px_auto] items-center gap-4 py-3 px-4 border-b border-ink-800 ${item.classification !== "normal" ? "bg-ink-900/60" : ""}`}>
     <button onClick={() => onSelect(item)} className="font-mono font-semibold text-[15px] text-left hover:text-amber">{item.symbol}</button>
-    <Sparkline points={data?.points.map((point) => point.price) ?? []} positive={isUp} />
+    <Sparkline points={Array.isArray(data?.points) ? data.points.map((point) => point.price) : []} positive={isUp} />
     <button onClick={() => onSelect(item)} className="text-left text-[13px] hover:text-paper">
       {item.dataAvailable ? <><span className={scoreStyle[item.classification]}>● {item.classification} · {item.meaningfulScore}/100</span><span className="text-muted block text-[11px] mt-1">{item.isStale ? "Delayed — last verified data" : item.evidence[0]?.detail ?? "No notable change"}</span></> : <span className="text-muted">Waiting for first quote…</span>}
     </button>

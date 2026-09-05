@@ -3,9 +3,6 @@ import { getSessionUserId } from "@/lib/auth";
 import { searchSymbol } from "@/lib/finnhub";
 
 export async function GET(req: NextRequest) {
-  const userId = await getSessionUserId();
-  if (!userId) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-
   const q = req.nextUrl.searchParams.get("q")?.trim();
   if (!q || q.length < 1) return NextResponse.json({ results: [] });
 

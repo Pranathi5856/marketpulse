@@ -39,7 +39,7 @@ export default function Dashboard() {
   );
 
   useEffect(() => {
-    if (!data?.items) return;
+    if (!data?.items || !Array.isArray(data.items)) return;
     if (data.mode === "live") {
       data.items.forEach((item) => {
         if (item.dataAvailable && !visitBaselines.current.has(item.symbol)) {
@@ -161,7 +161,7 @@ export default function Dashboard() {
     router.replace("/login");
   }
 
-  const rawActive = data?.items ?? [];
+  const rawActive = Array.isArray(data?.items) ? data.items : [];
   const active = rawActive.map((item) => {
     if (isCaughtUp) {
       return {

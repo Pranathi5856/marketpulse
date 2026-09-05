@@ -71,9 +71,26 @@ export default function LoginPage() {
 
       <button
         onClick={() => setMode(mode === "login" ? "signup" : "login")}
-        className="text-muted text-[13px] mt-5 hover:text-paper transition-colors"
+        className="text-muted text-[13px] mt-5 block hover:text-paper transition-colors"
       >
         {mode === "login" ? "Need an account? Sign up" : "Have an account? Sign in"}
+      </button>
+
+      <div className="relative my-6 text-center">
+        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-ink-800"></div></div>
+        <span className="relative bg-ink-950 px-3 text-[11px] text-muted tracking-wider uppercase font-mono">evaluator quick access</span>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => {
+          localStorage.setItem("marketpulse-mode", "demo");
+          router.push("/?mode=demo");
+        }}
+        className="w-full border border-amber/40 bg-amber/5 text-amber py-2.5 text-[13px] font-medium hover:bg-amber/10 transition-colors flex items-center justify-center gap-2 rounded-sm"
+      >
+        <span>⚡</span>
+        <span>Explore Demo Mode (No sign up required)</span>
       </button>
     </main>
   );

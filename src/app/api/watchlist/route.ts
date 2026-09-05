@@ -4,9 +4,40 @@ import { prisma } from "@/lib/db";
 import { getSessionUserId } from "@/lib/auth";
 import { computeChange } from "@/lib/changeDetection";
 import { demoWatchlist } from "@/lib/demo";
+import { getQuote } from "@/lib/finnhub";
 
 const STALE_THRESHOLD_MS = 5 * 60_000;
 const pctBetween = (current: number | null, baseline: number | null) => current && baseline && baseline > 0 ? ((current - baseline) / baseline) * 100 : null;
+
+async function ensureQuote(symbol: string) {
+  let latest = await prisma.quoteSnapshot.findFirst({
+    where: { symbol },
+    orderBy: { fetchedAt: "desc" },
+  });
+  const isExpired = !latest || (Date.now() - latest.fetchedAt.getTime() > 60_000);
+  if (isExpired && process.env.FINNHUB_API_KEY) {
+    try {
+      const q = await getQuote(symbol);
+      if (q && q.c > 0) {
+        latest = await prisma.quoteSnapshot.create({
+          data: {
+            symbol,
+            price: q.c,
+            prevClose: q.pc,
+            open: q.o,
+            dayHigh: q.h,
+            dayLow: q.l,
+            fetchedAt: new Date(),
+            source: "finnhub_ondemand",
+          },
+        });
+      }
+    } catch {
+      // Gracefully fall back to cached snapshot or null
+    }
+  }
+  return latest;
+}
 
 export async function GET(req: NextRequest) {
   const userId = await getSessionUserId();
@@ -16,7 +47,7 @@ export async function GET(req: NextRequest) {
   const items = await prisma.watchlistItem.findMany({ where: { userId }, orderBy: { addedAt: "asc" } });
   const results = await Promise.all(items.map(async (item) => {
     const [latest, stats, context] = await Promise.all([
-      prisma.quoteSnapshot.findFirst({ where: { symbol: item.symbol }, orderBy: { fetchedAt: "desc" } }),
+      ensureQuote(item.symbol),
       prisma.symbolStats.findUnique({ where: { symbol: item.symbol } }),
       prisma.symbolContext.findUnique({ where: { symbol: item.symbol } }),
     ]);
@@ -65,9 +96,9 @@ export async function GET(req: NextRequest) {
     // Compare each benchmark's current price to the last verified price at/before
     // the user's visit. If no historical snapshot exists in DB, fall back to prevClose.
     const [marketNow, marketThen, sectorNow, sectorThen, news] = await Promise.all([
-      prisma.quoteSnapshot.findFirst({ where: { symbol: "SPY" }, orderBy: { fetchedAt: "desc" } }),
+      ensureQuote("SPY"),
       prisma.quoteSnapshot.findFirst({ where: { symbol: "SPY", fetchedAt: { lte: baselineAt } }, orderBy: { fetchedAt: "desc" } }),
-      prisma.quoteSnapshot.findFirst({ where: { symbol: sectorBenchmark }, orderBy: { fetchedAt: "desc" } }),
+      ensureQuote(sectorBenchmark),
       prisma.quoteSnapshot.findFirst({ where: { symbol: sectorBenchmark, fetchedAt: { lte: baselineAt } }, orderBy: { fetchedAt: "desc" } }),
       prisma.newsEvidence.findMany({ where: { symbol: item.symbol, publishedAt: { gt: baselineAt } }, orderBy: { publishedAt: "desc" }, take: 3 }),
     ]);
@@ -138,7 +169,7 @@ export async function POST(req: NextRequest) {
   const parsed = addSchema.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: "Invalid symbol" }, { status: 400 });
   try {
-    const latest = await prisma.quoteSnapshot.findFirst({ where: { symbol: parsed.data.symbol }, orderBy: { fetchedAt: "desc" } });
+    const latest = await ensureQuote(parsed.data.symbol);
     const baselinePrice = latest?.prevClose ?? latest?.price ?? null;
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
     return NextResponse.json({

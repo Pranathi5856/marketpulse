@@ -172,7 +172,15 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid symbol" }, { status: 400 });
   try {
     const latest = await ensureQuote(parsed.data.symbol);
-    const baselinePrice = latest?.prevClose ?? latest?.price ?? null;
+    if (!latest || latest.price === null || latest.price <= 0) {
+      return NextResponse.json(
+        {
+          error: `Live market feed cannot verify quotes for "${parsed.data.symbol}". Finnhub free tier supports US-listed equities (e.g. AAPL, TSLA, NVDA, GOOG, MSFT).`,
+        },
+        { status: 400 }
+      );
+    }
+    const baselinePrice = latest.prevClose ?? latest.price;
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
     return NextResponse.json({
       item: await prisma.watchlistItem.create({
@@ -180,7 +188,7 @@ export async function POST(req: NextRequest) {
           userId,
           symbol: parsed.data.symbol,
           lastSeenPrice: baselinePrice,
-          lastSeenVolume: latest?.volume ?? null,
+          lastSeenVolume: latest.volume ?? null,
           lastSeenAt: yesterday,
         },
       }),

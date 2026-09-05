@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   try {
     const data = await searchSymbol(q);
     const results = data.result
-      .filter((r) => r.type === "Common Stock" || r.type === "ETP")
+      .filter((r) => !r.symbol.includes(".") && (r.type === "Common Stock" || r.type === "ETP"))
       .slice(0, 8)
       .map((r) => ({ symbol: r.symbol, description: r.description }));
     return NextResponse.json({ results });

@@ -119,6 +119,9 @@ export default function Dashboard() {
     if (response.ok) {
       setIsCaughtUp(false);
       mutate();
+    } else {
+      const data = await response.json().catch(() => ({}));
+      alert(data.error ?? "Failed to add symbol. Please try a valid US-listed stock (e.g. AAPL, TSLA).");
     }
   }
 

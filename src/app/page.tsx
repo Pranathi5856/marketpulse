@@ -302,7 +302,7 @@ export default function Dashboard() {
       {mode === "demo" && !data?.authenticated && (
         <div className="border border-amber/40 bg-amber/5 text-amber text-[13px] px-4 py-2.5 rounded-lg mb-6 flex items-center gap-2.5">
           <span className="text-base select-none">💡</span>
-          <span>Controlled presentation scenario — showcasing TSLA idiosyncratic drop with multi-factor evidence scoring and O(S) scaling.</span>
+          <span>Controlled presentation scenario — showcasing TSLA idiosyncratic drop with multi-factor evidence scoring and shared symbol polling.</span>
         </div>
       )}
 
@@ -419,8 +419,8 @@ export default function Dashboard() {
               </div>
 
               <div className="p-3 bg-ink-900/60 border border-ink-800 rounded-md">
-                <span className="font-mono text-amber text-[11px] font-bold block mb-1">00:35–00:55 · ARCHITECTURE & O(S) SCALING (Click Methodology)</span>
-                <p>&ldquo;In our architecture brief, notice our O(S) multi-tenant polling. We never poll per-user. If 50,000 users track TSLA, our distributed system makes 1 shared API call. Combined with 75% directional signal accuracy and a 14% false positive rate, this is built for production.&rdquo;</p>
+                <span className="font-mono text-amber text-[11px] font-bold block mb-1">00:35–00:55 · SHARED POLLING ARCHITECTURE (Click Methodology)</span>
+                <p>&ldquo;In our architecture brief, notice our shared polling architecture (1 poll per symbol). We never poll per-user. If 50,000 users track TSLA, our distributed system makes 1 shared API call. Combined with 75% directional signal accuracy and a 14% false positive rate, this is built for production.&rdquo;</p>
               </div>
 
               <div className="p-3 bg-ink-900/60 border border-ink-800 rounded-md">

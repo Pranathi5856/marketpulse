@@ -201,26 +201,30 @@ export function ChangeDetail({
                       <span className="text-paper text-[13px] font-medium">{signal.label}</span>
                       <span
                         className={`font-mono text-[11px] font-bold px-2 py-0.5 rounded ${
-                          signal.points >= 20
+                          signal.points >= 25
+                            ? "bg-rose-500/25 text-rose-300 border border-rose-500/40"
+                            : signal.points >= 18
                             ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
                             : signal.points >= 12
-                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                            : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/35"
+                            : "bg-amber-500/15 text-amber-300/90 border border-amber-500/25"
                         }`}
                       >
                         +{signal.points} pts
                       </span>
                     </div>
 
-                    {/* Proportional Contribution Bar */}
+                    {/* Proportional Contribution Bar - Unified warm palette shading darker with points */}
                     <div className="h-1.5 w-full bg-ink-950 rounded-full overflow-hidden mb-2">
                       <div
                         className={`h-full rounded-full transition-all duration-700 ${
-                          signal.points >= 20
+                          signal.points >= 25
+                            ? "bg-gradient-to-r from-rose-600 via-rose-500 to-rose-400"
+                            : signal.points >= 18
                             ? "bg-gradient-to-r from-rose-500 to-rose-400"
                             : signal.points >= 12
-                            ? "bg-gradient-to-r from-amber-500 to-amber-400"
-                            : "bg-gradient-to-r from-emerald-500 to-emerald-400"
+                            ? "bg-gradient-to-r from-amber-600 to-amber-500"
+                            : "bg-gradient-to-r from-amber-600/80 to-amber-400/80"
                         }`}
                         style={{ width: `${barPct}%` }}
                       />

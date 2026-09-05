@@ -44,7 +44,7 @@ export function MethodologyModal({ onClose }: { onClose: () => void }) {
           {/* Pillar 2 */}
           <div className="border border-ink-800 bg-ink-950 p-4 space-y-2">
             <h3 className="font-semibold text-paper flex items-center gap-2">
-              <span className="text-amber">2.</span> Multi-Tenant Scaling: O(S) Efficiency
+              <span className="text-amber">2.</span> Shared Polling: 1 API Poll Per Symbol
             </h3>
             <p className="text-muted leading-relaxed">
               Quotes and news are symbol-keyed, <strong className="text-paper">never user-keyed</strong>. One shared worker

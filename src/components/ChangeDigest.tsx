@@ -87,7 +87,7 @@ export function ChangeDigest({
         </div>
         <div className="bg-ink-950/60 border border-ink-800/80 px-3 py-2 rounded-md">
           <div className="flex items-center gap-1.5 text-amber text-[11px] font-mono font-semibold">
-            <span>⚡</span> O(S) Multi-Tenant
+            <span>⚡</span> 1 Poll / Symbol
           </div>
           <p className="text-muted text-[10px] mt-0.5 leading-tight font-sans">
             1 API poll per symbol shared across all portfolio watchers

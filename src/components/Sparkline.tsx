@@ -6,15 +6,18 @@ export function Sparkline({ points, positive }: { points: number[]; positive: bo
   }
   const min = Math.min(...points);
   const max = Math.max(...points);
-  const range = max - min || 1;
+  const isFlat = max === min;
+  const range = isFlat ? 1 : max - min;
   const w = 80;
   const h = 28;
+  const pad = 4;
+  const innerH = h - pad * 2;
   const step = w / (points.length - 1);
 
   const path = points
     .map((p, i) => {
       const x = i * step;
-      const y = h - ((p - min) / range) * h;
+      const y = isFlat ? h / 2 : pad + (innerH - ((p - min) / range) * innerH);
       return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
     })
     .join(" ");

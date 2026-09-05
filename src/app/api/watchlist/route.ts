@@ -9,12 +9,12 @@ import { getQuote } from "@/lib/finnhub";
 const STALE_THRESHOLD_MS = 5 * 60_000;
 const pctBetween = (current: number | null, baseline: number | null) => current && baseline && baseline > 0 ? ((current - baseline) / baseline) * 100 : null;
 
-async function ensureQuote(symbol: string) {
+async function ensureQuote(symbol: string, force = false) {
   let latest = await prisma.quoteSnapshot.findFirst({
     where: { symbol },
     orderBy: { fetchedAt: "desc" },
   });
-  const isExpired = !latest || (Date.now() - latest.fetchedAt.getTime() > 60_000);
+  const isExpired = force || !latest || (Date.now() - latest.fetchedAt.getTime() > 45_000);
   if (isExpired && process.env.FINNHUB_API_KEY) {
     try {
       const q = await getQuote(symbol);
@@ -46,10 +46,11 @@ export async function GET(req: NextRequest) {
   }
   if (!userId) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
+  const force = req.nextUrl.searchParams.get("refresh") === "true";
   const items = await prisma.watchlistItem.findMany({ where: { userId }, orderBy: { addedAt: "asc" } });
   const results = await Promise.all(items.map(async (item) => {
     const [latest, stats, context] = await Promise.all([
-      ensureQuote(item.symbol),
+      ensureQuote(item.symbol, force),
       prisma.symbolStats.findUnique({ where: { symbol: item.symbol } }),
       prisma.symbolContext.findUnique({ where: { symbol: item.symbol } }),
     ]);
@@ -83,14 +84,19 @@ export async function GET(req: NextRequest) {
     const sectorBenchmark = context?.sectorBenchmark ?? "SPY";
 
     // Baseline determination:
-    // If item.lastSeenPrice is not yet set, or was stamped identical to current price (e.g. freshly added symbol):
-    // use latest.prevClose (previous market session close) so the user has an immediate meaningful baseline!
-    const baselinePrice = (item.lastSeenPrice && Math.abs(item.lastSeenPrice - latest.price) > 0.001)
-      ? item.lastSeenPrice
-      : (latest.prevClose ?? item.lastSeenPrice ?? latest.price);
+    // If item.lastSeenPrice differs from current price (>0.001), use it.
+    // Otherwise, fall back to previous market session close (latest.prevClose) if available,
+    // ensuring the user immediately sees the session's real move (e.g. +0.84%) instead of a flat 0.00%!
+    const hasDistinctLastSeen = Boolean(
+      item.lastSeenPrice && Math.abs(item.lastSeenPrice - latest.price) > 0.001
+    );
+    const baselinePrice = hasDistinctLastSeen
+      ? item.lastSeenPrice!
+      : (latest.prevClose && Math.abs(latest.prevClose - latest.price) > 0.001
+          ? latest.prevClose
+          : (item.lastSeenPrice ?? latest.prevClose ?? latest.price));
 
-    // If item was added or viewed in the last 15 min, look back 24h for previous session's benchmark quotes & news
-    const isNewVisit = (Date.now() - item.lastSeenAt.getTime()) < 15 * 60_000;
+    const isNewVisit = (Date.now() - item.lastSeenAt.getTime()) < 15 * 60_000 || !hasDistinctLastSeen;
     const baselineAt = isNewVisit
       ? new Date(Date.now() - 24 * 60 * 60_000)
       : item.lastSeenAt;

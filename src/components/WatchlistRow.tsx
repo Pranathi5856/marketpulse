@@ -7,7 +7,11 @@ const fetcher = (url: string) => fetch(url).then((response) => response.json());
 const scoreStyle = { significant: "text-loss", moderate: "text-amber", normal: "text-gain" };
 
 export function WatchlistRow({ item, onRemove, onSelect }: { item: WatchlistItemView; onRemove: (symbol: string) => void; onSelect: (item: WatchlistItemView) => void }) {
-  const { data } = useSWR<{ points: { price: number; fetchedAt: string }[] }>(`/api/watchlist/${item.symbol}/history`, fetcher, { refreshInterval: 60_000 });
+  const { data } = useSWR<{ points: { price: number; fetchedAt: string }[] }>(
+    `/api/watchlist/${item.symbol}/history`,
+    fetcher,
+    { revalidateOnFocus: false, shouldRetryOnError: false, refreshInterval: 60_000 }
+  );
   const isUp = (item.pctChangeToday ?? 0) >= 0;
   return <div className={`grid grid-cols-[80px_90px_1fr_100px_100px_auto] items-center gap-4 py-3 px-4 border-b border-ink-800 ${item.classification !== "normal" ? "bg-ink-900/60" : ""}`}>
     <button onClick={() => onSelect(item)} className="font-mono font-semibold text-[15px] text-left hover:text-amber">{item.symbol}</button>

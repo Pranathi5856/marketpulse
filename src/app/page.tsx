@@ -25,8 +25,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      const saved = localStorage.getItem("marketpulse-mode");
-      if (params.get("mode") === "live" || (saved === "live" && params.get("mode") !== "demo")) {
+      if (params.get("mode") === "live") {
         setMode("live");
       }
     }
@@ -89,20 +88,11 @@ export default function Dashboard() {
     };
   }, [mode]);
 
-  useEffect(() => {
-    if (error?.status === 401 && mode === "live") {
-      setMode("demo");
-      localStorage.setItem("marketpulse-mode", "demo");
-      router.push("/login?needAuth=true");
-    }
-  }, [error, mode, router]);
-
   const switchMode = (next: "live" | "demo") => {
     if (next === "live" && !data?.authenticated) {
       router.push("/login?needAuth=true");
       return;
     }
-    localStorage.setItem("marketpulse-mode", next);
     visitBaselines.current.clear();
     initialComparisonDone.current = false;
     setIsCaughtUp(false);
@@ -260,7 +250,18 @@ export default function Dashboard() {
         </p>
       )}
 
-      {mode === "live" && <AddSymbolBar onAdd={addSymbol} />}
+      {mode === "live" && error?.status === 401 && (
+        <div className="border border-amber/40 bg-amber/5 p-6 mb-8 text-center rounded-sm">
+          <p className="text-paper text-[15px] font-semibold mb-1">Sign-in Required for Live Mode</p>
+          <p className="text-muted text-[13px] mb-4">You are currently browsing as a guest. Sign in to track live stocks in your personal portfolio.</p>
+          <div className="flex justify-center gap-3">
+            <button onClick={() => router.push("/login")} className="bg-amber text-ink-950 font-medium px-4 py-2 text-[13px] rounded-sm hover:bg-white transition-colors">Sign in / Create Account</button>
+            <button onClick={() => switchMode("demo")} className="border border-ink-700 px-4 py-2 text-[13px] text-muted hover:text-paper transition-colors">Switch to Demo Mode</button>
+          </div>
+        </div>
+      )}
+
+      {mode === "live" && !error && <AddSymbolBar onAdd={addSymbol} />}
       {isLoading && <p className="text-muted text-[14px]">Checking your watchlist…</p>}
 
       {data && (

@@ -15,14 +15,29 @@ type DashboardData = { items: WatchlistItemView[]; mode: "live" | "demo" };
 
 export default function Dashboard() {
   const router = useRouter();
-  const [mode, setMode] = useState<"live" | "demo">("live");
+  const [mode, setMode] = useState<"live" | "demo">(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("mode") === "demo" || localStorage.getItem("marketpulse-mode") === "demo") {
+        return "demo";
+      }
+    }
+    return "live";
+  });
   const [selected, setSelected] = useState<WatchlistItemView | null>(null);
   const [showMethodology, setShowMethodology] = useState(false);
   const [isCaughtUp, setIsCaughtUp] = useState(false);
   const visitBaselines = useRef<Map<string, { price: number | null; timestamp: string | null }>>(new Map());
   const initialComparisonDone = useRef(false);
 
-  useEffect(() => { if (localStorage.getItem("marketpulse-mode") === "demo") setMode("demo"); }, []);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("mode") === "demo" || localStorage.getItem("marketpulse-mode") === "demo") {
+        setMode("demo");
+      }
+    }
+  }, []);
 
   const { data, error, mutate, isLoading } = useSWR<DashboardData>(
     `/api/watchlist?mode=${mode}`,
@@ -81,7 +96,11 @@ export default function Dashboard() {
     };
   }, [mode]);
 
-  useEffect(() => { if (error?.status === 401) router.replace("/login"); }, [error, router]);
+  useEffect(() => {
+    if (error?.status === 401 && mode === "live") {
+      router.replace("/login");
+    }
+  }, [error, mode, router]);
 
   const switchMode = (next: "live" | "demo") => {
     localStorage.setItem("marketpulse-mode", next);
@@ -192,9 +211,18 @@ export default function Dashboard() {
           >
             Methodology & Architecture ↗
           </button>
-          <button onClick={logout} className="text-muted text-[13px] hover:text-paper">
-            Sign out
-          </button>
+          {error?.status === 401 ? (
+            <button
+              onClick={() => router.push("/login")}
+              className="text-amber text-[13px] hover:underline"
+            >
+              Sign in
+            </button>
+          ) : (
+            <button onClick={logout} className="text-muted text-[13px] hover:text-paper">
+              Sign out
+            </button>
+          )}
         </div>
       </div>
 

@@ -85,7 +85,7 @@ export default function LoginPage() {
         type="button"
         onClick={() => {
           localStorage.setItem("marketpulse-mode", "demo");
-          router.push("/?mode=demo");
+          window.location.href = "/?mode=demo";
         }}
         className="w-full border border-amber/40 bg-amber/5 text-amber py-2.5 text-[13px] font-medium hover:bg-amber/10 transition-colors flex items-center justify-center gap-2 rounded-sm"
       >

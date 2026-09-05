@@ -40,9 +40,11 @@ async function ensureQuote(symbol: string) {
 }
 
 export async function GET(req: NextRequest) {
+  if (req.nextUrl.searchParams.get("mode") === "demo") {
+    return NextResponse.json({ items: demoWatchlist, mode: "demo" });
+  }
   const userId = await getSessionUserId();
   if (!userId) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  if (req.nextUrl.searchParams.get("mode") === "demo") return NextResponse.json({ items: demoWatchlist, mode: "demo" });
 
   const items = await prisma.watchlistItem.findMany({ where: { userId }, orderBy: { addedAt: "asc" } });
   const results = await Promise.all(items.map(async (item) => {
